@@ -1,9 +1,13 @@
 (ns domina.test
-  (:use [domina :only [nodes single-node by-id by-class children clone append!
-                       prepend! detach! destroy! destroy-children! insert! insert-before!
-                       insert-after! swap-content! style attr set-style! set-attr! styles attrs
-                       remove-attr! set-styles! set-attrs! has-class? add-class! remove-class! classes set-classes!
-                       text set-text! value set-value! html set-html! set-data! get-data log-debug]]
+  (:use [domina :only [nodes single-node by-id by-class children clone
+                       append!  prepend! detach! destroy!
+                       destroy-children! insert! insert-before!
+                       insert-after! swap-content! style attr
+                       set-style! set-attr! styles attrs remove-attr!
+                       set-styles! set-attrs! has-class? add-class!
+                       remove-class!  classes set-classes!  text
+                       set-text! value set-value! html set-html!
+                       set-data! get-data log-debug log]]
         [domina.xpath :only [xpath]]
         [domina.css :only [sel]]
         [domina.events :only [listen! capture! listen-once! capture-once!
@@ -149,6 +153,11 @@
                (standard-fixture)
                (assert (= 1 (count (nodes (by-class "p3")))))))
 
+(add-test "look up multiple nodes by class"
+          #(do (reset)
+               (append! (xpath "//body") "<p class='tc'>test1</p><p class='tc'>test2</p>")
+               (assert (= 2 (count (nodes (by-class "tc")))))))
+
 (add-test "child selection"
           #(do (reset)
                (standard-fixture)
@@ -268,6 +277,14 @@
                  (assert (= 0 (count (nodes (xpath "//div[@class='d1']/p")))))
                  (append! (xpath "//div[@class='d1']") n)
                  (assert (= 3 (count (nodes (xpath "//div[@class='d1']/p"))))))))
+
+(add-test "detach child nodes"
+          #(do (reset)
+               (standard-fixture)
+               (let [parent (xpath "//div[@class='d1']")
+                     detached-children (detach! (children parent))]
+                 (assert (= 0 (count (nodes (xpath "//div[@class='d1']/p")))))
+                 (assert (= 3 (count detached-children))))))
 
 (add-test "clear a node's contents"
           #(do (reset)
@@ -526,14 +543,7 @@
 (add-test "can retrieve the text value of a node with normalization."
           #(do (reset)
                (append! (xpath "//body") "<p>\n\n   Some text.  \n  </p>")
-               (assert (= "Some text." (text (xpath "//p"))))
-               (assert (= "Some text." (text (xpath "//p") true)))))
-
-;; Temporarily removed this test: IE8 handles this differently than other browsers.
-(add-test "can retrieve the text value of a node without normalization."
-          #(do (reset)
-               (append! (xpath "//body") "<p>\n\n   Some text.  \n  </p>")
-               (assert (= "\n\n   Some text.  \n  " (text (xpath "//p") false)))))
+               (assert (= "Some text." (text (xpath "//p"))))))
 
 (add-test "can set text on a single node"
           #(do (reset)

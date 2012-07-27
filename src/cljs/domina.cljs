@@ -102,13 +102,13 @@
 ;;;;;;;;;;;;;;;;;;; Public API ;;;;;;;;;;;;;;;;;
 
 (def *debug* true)
-(defn log-debug [mesg]
+(defn log-debug [& mesg]
   (when (and *debug* (not (= (.-console js/window) js/undefined)))
-    (.log js/console mesg)))
+    (.log js/console (apply str  mesg))))
 
-(defn log [mesg]
+(defn log [& mesg]
   (when (.-console js/window)
-    (.log js/console mesg)))
+    (.log js/console (apply str mesg))))
 
 (defn by-id
   "Returns content containing a single node by looking up the given ID"
@@ -126,7 +126,7 @@
 (defn children
   "Gets all the child nodes of the elements in a content. Same as (xpath content '*') but more efficient."
   [content]
-  (mapcat dom/getChildren (nodes content)))
+  (doall (mapcat dom/getChildren (nodes content))))
 
 (defn clone
   "Returns a deep clone of content."
@@ -311,12 +311,9 @@
 ;; Contents
 
 (defn text
-  "Returns the text of a node. Assumes content is a single node. Optional 'normalize' paramter indicates whether to collapse whitespace, normalize line breaks and trim (defaults to true). Does not return internal markup."
-  ([content] (text content true))
-  ([content normalize]
-     (if normalize
-       (string/trim (dom/getTextContent (single-node content)))
-       (dom/getRawTextContent (single-node content)))))
+  "Returns the text of a node. Assumes content is a single node. For consistency across browsers, will always trim whitespace of the beginning and end of the returned text."
+  [content]
+  (string/trim (dom/getTextContent (single-node content))))
 
 (defn set-text!
   "Sets the text value of all the nodes in the given content."
@@ -449,8 +446,7 @@
 (defn- array-like?
   [obj]
   (and obj
-       (.-length obj)
-       (or (.-indexOf obj) (.-item obj))))
+       (.-length obj)))
 
 (defn normalize-seq
   "Some versions of IE have things that are like arrays in that they
@@ -461,7 +457,7 @@
   [list-thing]
   (cond
    (nil? list-thing) '()
-   (dm/satisfies? ISeqable list-thing) (seq list-thing)
+   (satisfies? ISeqable list-thing) (seq list-thing)
    (array-like? list-thing) (lazy-nodelist list-thing)
    :default (seq [list-thing])))
 
@@ -480,13 +476,13 @@
   (nodes [content]
     (cond
      (nil? content) '()
-     (dm/satisfies? ISeqable content) (seq content)
+     (satisfies? ISeqable content) (seq content)
      (array-like? content) (lazy-nodelist content)
      :default (seq [content])))
   (single-node [content]
     (cond
      (nil? content) nil
-     (dm/satisfies? ISeqable content) (first content)
+     (satisfies? ISeqable content) (first content)
      (array-like? content) (. content (item 0))
      :default content)))
 
